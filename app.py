@@ -1,5 +1,5 @@
 import streamlit as st
-from main import run_research   # your main function
+from main import run_research
 
 st.set_page_config(page_title="AI Research Agent", layout="wide")
 
