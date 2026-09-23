@@ -103,11 +103,11 @@ if user_input:
         with st.spinner("Thinking..."):
             try:
                 response = client.models.generate_content(
-                   model="gemini-3.6-flash",
-                    contents=conversation
-                )
+    model="gemini-3.6-flash",
+    contents=conversation
+)
 
-                answer = response.text
+answer = response.text
                 st.markdown(answer)
 
                 st.session_state.messages.append({
