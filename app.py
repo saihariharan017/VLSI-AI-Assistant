@@ -2,10 +2,17 @@ import streamlit as st
 from google import genai
 from dotenv import load_dotenv
 import os
+import time
 
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    try:
+        API_KEY = st.secrets["GEMINI_API_KEY"]
+    except:
+        API_KEY = None
 
 st.set_page_config(
     page_title="VLSI AI Assistant",
@@ -25,8 +32,7 @@ client = genai.Client(api_key=API_KEY)
 SYSTEM_PROMPT = """
 You are a specialized VLSI Engineering AI Assistant.
 
-Your main purpose is to help students, engineers and researchers
-understand VLSI and semiconductor design concepts.
+Your main purpose is to help students, engineers and researchers understand VLSI and semiconductor design concepts.
 
 You should answer questions related to:
 
@@ -64,8 +70,7 @@ Use examples whenever useful.
 For Verilog questions, provide clean and correct code.
 Explain code line by line when requested.
 For comparison questions, use tables when useful.
-If the question is not related to VLSI, politely say that
-you are primarily designed for VLSI-related questions.
+If the question is not related to VLSI, politely say that you are primarily designed for VLSI-related questions.
 Do not invent technical facts.
 For beginners, explain concepts step-by-step.
 """
@@ -80,7 +85,6 @@ for message in st.session_state.messages:
 user_input = st.chat_input("Ask your VLSI question...")
 
 if user_input:
-
     with st.chat_message("user"):
         st.markdown(user_input)
 
@@ -101,19 +105,33 @@ if user_input:
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            try:
-                response = client.models.generate_content(
-    model="gemini-3.6-flash",
-    contents=conversation
-)
+            answer = None
 
-answer = response.text
+            for attempt in range(3):
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-3.6-flash",
+                        contents=conversation
+                    )
+
+                    answer = response.text
+                    break
+
+                except Exception as e:
+                    error_text = str(e)
+
+                    if "503" in error_text or "UNAVAILABLE" in error_text:
+                        if attempt < 2:
+                            time.sleep(5)
+                        else:
+                            answer = "Gemini service is temporarily busy. Please try again in a few moments."
+                    else:
+                        answer = f"Error: {e}"
+
+            if answer:
                 st.markdown(answer)
 
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": answer
                 })
-
-            except Exception as e:
-                st.error(f"Error: {e}")
