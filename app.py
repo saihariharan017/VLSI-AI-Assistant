@@ -1,5 +1,7 @@
 import streamlit as st
-from main import run_research
+from google import genai
+from dotenv import load_dotenv
+import os
 
 st.set_page_config(page_title="AI Research Agent", layout="wide")
 
